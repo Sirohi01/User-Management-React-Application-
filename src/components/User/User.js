@@ -1,53 +1,58 @@
-import axios from "axios";
+// src/components/User/User.js
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import "./User.css";
-const EditUser = () => {
-  const [user, setUser] = useState([]);
-  const { id } = useParams();
-  const getUserApi = "http://localhost:3000/user";
+import { useNavigate, useParams } from "react-router-dom";
+import Loader from '../Common/Loader';
 
-  useEffect(() => {
-    getUser();
-  }, []);
+const User = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const userApi = `http://localhost:3000/user/${id}`;
+    
+    const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-  const getUser = () => {
-    axios
-      .get(getUserApi.concat("/") + id)
-      .then((item) => {
-        setUser(item.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+    useEffect(() => {
+        getUser();
+    }, []);
 
-  return (
-    <div className="user mt-5">
-      <table className="table table-bordered">
-    <thead>
-      <tr>
-        <th>Firstname</th>
-        <th>Lastname</th>
-        
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Name</td>
-        <td>{user.name}</td>
-      </tr>
-      <tr>
-        <td>Email</td>
-        <td>{user.email}</td>
-      </tr>
-      <tr>
-        <td>Phone</td>
-        <td>{user.phone}</td>
-      </tr>
-    </tbody>
-  </table>
-    </div>
-  );
+    const getUser = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(userApi);
+            if (!response.ok) {
+                throw new Error('Failed to fetch user');
+            }
+            const data = await response.json();
+            setUser(data);
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) {
+        return <Loader />;
+    }
+
+    if (error) {
+        return <p>Error: {error}</p>;
+    }
+
+    if (!user) {
+        return <p>No user found</p>;
+    }
+
+    return (
+        <div className='user-details'>
+            <h2>User Details</h2>
+            <p><strong>Name:</strong> {user.name}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Phone:</strong> {user.phone}</p>
+            <button onClick={() => navigate(-1)} className="btn btn-secondary">Back</button>
+        </div>
+    );
 };
-export default EditUser;
+
+export default User;
